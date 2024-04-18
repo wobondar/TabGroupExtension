@@ -3,11 +3,18 @@
 const INITIALIZATION_DELAY = 2000; // 5 seconds in milliseconds
 // looks through a list of search terms and tells you if url is in them
 setTimeout(() => {
-let isSearchTermInUrl =  (url: string, searchTerms: string[]) => {
+let isSearchTermInUrl =  (url: string, title: string | undefined, searchTerms: string[]) => {
   if(searchTerms) {
     for(let i = 0; i < searchTerms.length; i++) {
-      if(url.includes(searchTerms[i])) {
-        return true;
+      if (title && searchTerms[i].startsWith("t:")){
+        const searchTitle = searchTerms[i].split("t:")[1];
+        if(title.includes(searchTitle)) {
+          return true;
+        }
+      } else {
+        if(url.includes(searchTerms[i])) {
+          return true;
+        }
       }
     }
     return false;
@@ -86,7 +93,7 @@ chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
       chrome.storage.sync.set({TABGROUPS: ''})
       return;
     }
-          const { url } = tab;
+          const { url, title } = tab;
           if (Object.keys(chromeStorageTabGroupObject).length !== 0) {
             let ungroup = true;
             let matchingTabGroupInBrowser = false;
@@ -95,7 +102,7 @@ chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
               const currentChromeStorageTabGroup = chromeStorageTabGroupObject.TABGROUPS[i];
               if ( Object.prototype.hasOwnProperty.call(currentChromeStorageTabGroup, group) ) {
                 const searchTerms = currentChromeStorageTabGroup[group].URL;
-                if (isSearchTermInUrl(url, searchTerms)) {
+                if (isSearchTermInUrl(url, title, searchTerms)) {
                   ungroup = false
                   matchingTabGroupInBrowser = groupTabIfTabGroupExistsInBrowser(browserTabGroupObject, currentChromeStorageTabGroup[group], tabId);
                   // if tab doesn't have a group id already and no other tabs following that same
